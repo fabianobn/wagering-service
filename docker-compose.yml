@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wager
+      POSTGRES_PASSWORD: wager
+      POSTGRES_DB: wager
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wager -d wager"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ministack:
+    image: ministackorg/ministack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: sqs
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:4566/_ministack/health')\""]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  migrate:
+    build: .
+    command: ["bun", "src/migrate.ts"]
+    environment:
+      DATABASE_URL: postgresql://wager:wager@postgres:5432/wager
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build: .
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://wager:wager@postgres:5432/wager
+      AWS_ENDPOINT_URL: http://ministack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_WAGER_QUEUE: wager-transactions.fifo
+      SQS_WAGER_DLQ: wager-transactions-dlq.fifo
+      SQS_EVENTS_QUEUE: integration-events.fifo
+      SQS_EVENTS_DLQ: integration-events-dlq.fifo
+      LOG_LEVEL: info
+    expose:
+      - "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      ministack:
+        condition: service_healthy
+
+  proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+
+volumes:
+  postgres_data:

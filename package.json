@@ -1,0 +1,39 @@
+{
+  "name": "wagering-service",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "bun@1.4.4",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "start:dev": "bun --watch src/main.ts",
+    "start:prod": "bun src/main.ts",
+    "build": "bun build src/main.ts --outdir dist --target bun --packages external",
+    "typecheck": "bun x tsc --noEmit",
+    "test": "bun test test/unit",
+    "test:unit": "bun test test/unit",
+    "test:integration": "bun test test/integration --timeout 60000 --max-concurrency 1",
+    "test:concurrency": "bun test test/concurrency --timeout 180000 --max-concurrency 1",
+    "test:load": "bun run test/load/run.ts",
+    "migration:up": "bun src/migrate.ts",
+    "migration:down": "bun src/migrate.ts down"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1164.0",
+    "@mikro-orm/core": "^7.2.8",
+    "@mikro-orm/migrations": "^7.2.8",
+    "@mikro-orm/nestjs": "^7.1.0",
+    "@mikro-orm/postgresql": "^7.2.8",
+    "@nestjs/common": "^12.4.0",
+    "@nestjs/core": "^12.4.0",
+    "@nestjs/platform-express": "^12.4.0",
+    "decimal.js": "^10.6.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@mikro-orm/cli": "^7.2.8",
+    "@types/bun": "^1.4.4",
+    "@types/express": "^5.0.6",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.tmp
+tmp
+coverage
+.env
+test
+*.md
+!ARCHITECTURE.md
